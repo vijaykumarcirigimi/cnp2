@@ -255,6 +255,31 @@ with st.sidebar:
     selected_model = DEEPSEEK_MODELS[selected_model_label]
     st.caption(f"`{selected_model}`")
 
+    if api_key:
+        if st.button("🔑 Test API Key"):
+            try:
+                test_headers = {
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "https://edstellar.com",
+                    "X-Title": "Edstellar Page Builder",
+                }
+                test_payload = {
+                    "model": selected_model,
+                    "messages": [{"role": "user", "content": "Reply with just: OK"}],
+                    "max_tokens": 5,
+                }
+                r = requests.post(OPENROUTER_API_URL, headers=test_headers, json=test_payload, timeout=30)
+                rdata = r.json()
+                if r.ok and "choices" in rdata:
+                    st.success(f"Key valid! Model: {selected_model_label}")
+                else:
+                    err = rdata.get("error", {})
+                    msg = err.get("message", str(err)) if isinstance(err, dict) else str(err)
+                    st.error(f"API error: {msg}")
+            except Exception as e:
+                st.error(f"Connection failed: {e}")
+
     st.divider()
     st.header("📚 Design Library")
     lib_index = load_library_index()
